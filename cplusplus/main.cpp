@@ -42,7 +42,7 @@ private:
 
 
     ViewConfig view_config;
-    view_config.initial_device_scale = 2.0;
+    view_config.initial_device_scale = 1.0;
     view_config.is_accelerated = false;
 
     view_ = renderer_->CreateView(1600, 800, view_config, nullptr);
@@ -64,9 +64,11 @@ public:
     return app;
   }
 
-  ultralight::RefPtr<ultralight::Buffer> Run(const String& html_string) {
+  ultralight::RefPtr<ultralight::Buffer> Run(const String& html_string, uint32_t width = 1600, uint32_t height = 800) {
     LogMessage(LogLevel::Info, "Starting Run(), waiting for page to load...");
-
+    
+    view_->Resize(width, height);
+    
     view_->LoadHTML(html_string);
     LogMessage(LogLevel::Info, "Html String loaded into the View.");
 
@@ -119,10 +121,18 @@ Napi::Value renderHtmlToPNG(const Napi::CallbackInfo& info) {
     return env.Null();
   }
 
+  uint32_t width = 1600;
+  uint32_t height = 800;
+  
+  if (info.Length() >= 3 && info[1].IsNumber() && info[2].IsNumber()) {
+    width = info[1].As<Napi::Number>().Uint32Value();
+    height = info[2].As<Napi::Number>().Uint32Value();
+  }
+
   std::string html_string = info[0].As<Napi::String>().Utf8Value();
   ultralight::String html_string_ul = ultralight::String(html_string.c_str());
 
-  ultralight::RefPtr<ultralight::Buffer> buffer = MyApp::instance().Run(html_string_ul);
+  ultralight::RefPtr<ultralight::Buffer> buffer = MyApp::instance().Run(html_string_ul, width, height);
 
   if (!buffer) {
     Napi::Error::New(env, "Failed to render HTML").ThrowAsJavaScriptException();
