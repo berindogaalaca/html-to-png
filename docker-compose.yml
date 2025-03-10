@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  render-to-png:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    image: render-to-png
+    command: ["node", "dist/index.js"]
